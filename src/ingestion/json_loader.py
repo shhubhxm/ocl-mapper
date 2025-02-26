@@ -1,18 +1,36 @@
 # src/ingestion/json_loader.py
 import json
+import os
 
-def load_json(file_path):
+def load_json(json_path):
     """
-    Loads a JSON file and returns the parsed data.
+    Loads the extracted JSON file and returns only the 'concepts' list.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        return data
+        # Ensure the file exists
+        if not os.path.exists(json_path):
+            raise FileNotFoundError(f"JSON file not found at: {json_path}")
+
+        with open(json_path, 'r', encoding='utf-8') as f:
+            full_data = json.load(f)
+
+        # Extract only the 'concepts' key
+        concepts = full_data.get("concepts", [])
+
+        if not concepts:
+            print("⚠ Warning: No concepts found in the JSON file!")
+
+        return concepts
+
     except Exception as e:
         raise ValueError(f"Error loading JSON file: {e}")
 
 if __name__ == "__main__":
-    # Example usage (update file path as needed)
-    data = load_json("data/raw/export.json")
-    print(data)
+    # Adjust the path to match your extracted JSON file location
+    json_file_path = "data/raw/export.json"
+
+    # Load and test the JSON extraction
+    concepts_data = load_json(json_file_path)
+    print(f"✅ Loaded {len(concepts_data)} concepts")
+    print(concepts_data[:3])  # Print first 3 concepts for verification
+
