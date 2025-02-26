@@ -35,7 +35,7 @@ ocl-mapper/
 │       └── config.py           # Configuration parameters (thresholds, weights)
 ├── tests/                      # Unit tests for all modules
 ├── Dockerfile                  # Dockerfile for containerizing the API
-├── docker-compose.yml          # Optional docker-compose for simplified deployment
+├── docker-compose.yml          # docker-compose for simplified deployment
 ├── requirements.txt            # Python dependencies
 ├── README.md                   # Project overview, setup, and usage instructions
 └── setup.sh                    # Script to setup the project environment
