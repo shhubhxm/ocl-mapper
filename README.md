@@ -12,6 +12,7 @@ The API performs the following tasks:
 
 ## File Structure
 
+```
 ocl-mapper/
 ├── data/
 │   ├── raw/
@@ -38,7 +39,7 @@ ocl-mapper/
 ├── requirements.txt            # Python dependencies
 ├── README.md                   # Project overview, setup, and usage instructions
 └── setup.sh                    # Script to setup the project environment
-
+```
 
 ## Prerequisites
 
