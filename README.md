@@ -4,17 +4,45 @@ This project implements an API that ingests clinical terms from CSV files and ma
 
 ## Project Overview
 
-The API performs the following tasks:
-- **Data Ingestion & Preprocessing:** Loads CSV data and JSON dictionary sources, normalizing multilingual text fields.
-- **Embedding & Matching:** Uses BioBERT (or an alternative model) to generate embeddings for clinical terms and dictionary entries. A nearest-neighbor search retrieves candidate matches, which are then scored and categorized.
-- **API Layer:** Exposes a RESTful API (using FastAPI) to upload CSV files and return match results in a JSON format suitable for integration with the OCL web UI.
-- **User Feedback System**: Allows **manual corrections** via `/feedback` API.
-- **Dynamic Score Adjustment**: **Learns over time** and improves match accuracy.
-- **Categorized Matches**: Labels results as:
-  - ✅ `"Pre-matched"` (High confidence)
-  - ⚠ `"To review"` (Medium confidence)
-  - ❌ `"No match"` (Low confidence)
-- **Swagger UI for Testing**: Easily test endpoints at `http://127.0.0.1:8000/docs`.
+### ** API Functionality (with Exact Libraries & Techniques Used)**  
+
+The API is built using **FastAPI** and leverages **BioBERT embeddings** from `dmis-lab/biobert-base-cased-v1.1` for clinical term matching.  
+
+### ** Key Features & Libraries Used:**  
+
+- ** Data Ingestion & Preprocessing** (`pandas`, `json`)  
+  - Loads CSV files and medical dictionaries (`OCL_MSF_Source.json`).
+  - Normalizes multilingual text fields, including **Arabic** (handled as raw text).  
+
+- ** Embedding & Matching** (`transformers`, `torch`, `scikit-learn`)  
+  - Uses **BioBERT** to generate embeddings for medical terms.  
+  - **Cosine similarity (`sklearn.metrics.pairwise.cosine_similarity`)** ranks the best matches.  
+
+- ** API Layer** (`fastapi`, `uvicorn`)  
+  - **`/match`** → Uploads CSV & returns **top-k concept matches**.  
+  - **`/feedback`** → Stores user corrections dynamically in `feedback_store.json`.  
+
+- ** Learning from User Feedback** (`json`)  
+  - **Feedback improves similarity scores** in real-time.  
+  - Reloads feedback dynamically inside `match()` without restarting API.  
+
+- ** Categorized Matches**  
+  - ✅ **Pre-matched** (High confidence, ≥0.99)  
+  - ⚠ **To review** (Medium confidence, 0.75 - 0.99)  
+  - ❌ **No match** (Low confidence, <0.75)  
+
+- ** Testing & Validation** (`Swagger UI`, `cURL`, `Postman`)  
+  - Easily test endpoints at `http://127.0.0.1:8000/docs`.  
+
+### **📌 Summary of Libraries Used**
+| **Feature** | **Libraries Used** |
+|------------|-----------------|
+| **API Development** | `fastapi`, `uvicorn` |
+| **Data Handling** | `pandas`, `json`, `os` |
+| **Text Embeddings** | `transformers`, `torch` |
+| **Similarity Matching** | `scikit-learn (cosine_similarity)`, `numpy` |
+| **Multilingual Support** | `langdetect`, `bert-base-multilingual-cased` |
+| **Feedback Storage** | `json` (local file-based learning) |
 
 ## File Structure
 
@@ -45,8 +73,7 @@ ocl-mapper/
 
 ## Prerequisites
 
-- [Python 3.9+](https://www.python.org/downloads/) (if running locally without Docker)
-
+- [Python 3.9+]
 
 ##  Installation & Setup
 
@@ -73,7 +100,7 @@ Go to http://127.0.0.1:8000/docs and try:
 ## How Feedback System Works
 
 1. Run ```/match``` API → Get results with similarity scores.
-2. Submit ```/feedbac```k API → Store corrections.
+2. Submit ```/feedback``` API → Store corrections.
 3. Re-run ```/match``` → Corrected terms get a boosted score automatically.
 
 ### Example Feedback Submission
