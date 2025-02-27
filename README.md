@@ -4,11 +4,11 @@ This project implements an API that ingests clinical terms from CSV files and ma
 
 ## Project Overview
 
-### ** API Functionality (with Exact Libraries & Techniques Used)**  
+### **API Functionality (with Exact Libraries & Techniques Used)**  
 
 The API is built using **FastAPI** and leverages **BioBERT embeddings** from `dmis-lab/biobert-base-cased-v1.1` for clinical term matching.  
 
-### ** Key Features & Libraries Used:**  
+### **Key Features & Libraries Used:**  
 
 - **Data Ingestion & Preprocessing** (`pandas`, `json`)  
   - Loads CSV files and medical dictionaries (`OCL_MSF_Source.json`).
