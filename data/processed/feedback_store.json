@@ -1,0 +1,20 @@
+{
+    "Musculoskeletal pain": [
+        {
+            "candidate_id": "7306178",
+            "candidate_text": "Musculoskeletal pain"
+        }
+    ],
+    "Diarrhea": [
+        {
+            "candidate_id": "7306174",
+            "candidate_text": "Diarrhea"
+        }
+    ],
+    "2.3 loss of interest / anhedonia": [
+        {
+            "candidate_id": "5687601",
+            "candidate_text": "Burn dressing"
+        }
+    ]
+}

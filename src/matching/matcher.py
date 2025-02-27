@@ -1,30 +1,18 @@
-# src/matching/matcher.py
 import numpy as np
+import json
+import os
 from sklearn.metrics.pairwise import cosine_similarity
 from src.model.embedder import BioBERTEmbedder
 from src.ingestion.json_loader import load_json
 
-def build_candidates_from_dict(concepts_data):
-    """
-    Extracts candidate terms from the dictionary concepts.
-    """
-    candidate_texts = []
-    candidate_ids = []
-    
-    for concept in concepts_data:
-        # Use "display_name" as the primary term
-        if "display_name" in concept:
-            candidate_texts.append(concept["display_name"].lower().strip())
-            candidate_ids.append(concept["uuid"])
-        
-        # Also add synonyms/alternative names
-        if "names" in concept:
-            for name_entry in concept["names"]:
-                if "name" in name_entry:
-                    candidate_texts.append(name_entry["name"].lower().strip())
-                    candidate_ids.append(concept["uuid"])  # Same UUID as primary term
+feedback_file = "data/processed/feedback_store.json"
 
-    return candidate_texts, candidate_ids
+def load_feedback():
+    """ Reloads feedback from file every time to ensure the latest corrections are used. """
+    if os.path.exists(feedback_file):
+        with open(feedback_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
 
 class Matcher:
     def __init__(self, candidate_texts, candidate_ids, embedder=None):
@@ -34,33 +22,27 @@ class Matcher:
         self.candidate_embeddings = np.array([self.embedder.get_embedding(text) for text in candidate_texts])
 
     def match(self, query_text, top_k=5):
+        """ Perform matching and dynamically adjust based on feedback. """
+        feedback_store = load_feedback()  # ✅ Always reload latest feedback
+
         query_embedding = self.embedder.get_embedding(query_text)
         similarities = cosine_similarity([query_embedding], self.candidate_embeddings)[0]
         top_indices = np.argsort(similarities)[-top_k:][::-1]
+
         results = []
         for idx in top_indices:
-            result = {
+            match = {
                 "candidate_id": self.candidate_ids[idx],
                 "candidate_text": self.candidate_texts[idx],
                 "similarity_score": float(similarities[idx])
             }
-            results.append(result)
+
+            # ✅ If feedback exists, increase similarity score for correct matches
+            if query_text in feedback_store:
+                for correct_match in feedback_store[query_text]:
+                    if match["candidate_text"] == correct_match["candidate_text"]:
+                        match["similarity_score"] += 0.05  # Boost user-approved matches
+
+            results.append(match)
+
         return results
-
-if __name__ == "__main__":
-    # Load real dictionary data
-    concepts_data = load_json("data/raw/export.json")
-
-    # Build candidate lists from the dictionary
-    candidate_texts, candidate_ids = build_candidates_from_dict(concepts_data)
-
-    # Initialize matcher with real dictionary data
-    matcher = Matcher(candidate_texts, candidate_ids)
-
-    # Test matching function with a sample query
-    test_query = "Musculoskeletal pain"
-    match_results = matcher.match(test_query, top_k=3)
-
-    print(f"\n🔍 Matching Results for '{test_query}':")
-    for i, result in enumerate(match_results, start=1):
-        print(f"{i}. {result['candidate_text']} (ID: {result['candidate_id']}, Score: {result['similarity_score']:.2f})")
