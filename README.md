@@ -8,79 +8,96 @@ The API performs the following tasks:
 - **Data Ingestion & Preprocessing:** Loads CSV data and JSON dictionary sources, normalizing multilingual text fields.
 - **Embedding & Matching:** Uses BioBERT (or an alternative model) to generate embeddings for clinical terms and dictionary entries. A nearest-neighbor search retrieves candidate matches, which are then scored and categorized.
 - **API Layer:** Exposes a RESTful API (using FastAPI) to upload CSV files and return match results in a JSON format suitable for integration with the OCL web UI.
-- **Docker Integration:** The entire application is containerized using Docker, ensuring a consistent runtime environment and simplifying deployment.
+- **User Feedback System**: Allows **manual corrections** via `/feedback` API.
+- **Dynamic Score Adjustment**: **Learns over time** and improves match accuracy.
+- **Categorized Matches**: Labels results as:
+  - ✅ `"Pre-matched"` (High confidence)
+  - ⚠ `"To review"` (Medium confidence)
+  - ❌ `"No match"` (Low confidence)
+- **Swagger UI for Testing**: Easily test endpoints at `http://127.0.0.1:8000/docs`.
 
 ## File Structure
 
-```
+```bash
 ocl-mapper/
 ├── data/
-│   ├── raw/
-│   │   ├── MSF_MentalHealth_Concepts_Benchmarking_Dataset.csv
-│   │   └── OCL_MSF_Source_v20250224.zip
-│   └── processed/
-├── models/
-│   └── BioBERT/                # Local model files and configuration
+│   ├── raw/                     # CSV input files
+│   ├── processed/               # Extracted JSON & feedback storage
+│   │   ├── OCL_MSF_Source.json  # MSF and CEIL Medical Dictionary
+│   │   ├── feedback_store.json  # Stores user feedback (Auto-created)
 ├── src/
 │   ├── ingestion/
-│   │   ├── csv_loader.py       # CSV ingestion and preprocessing module
-│   │   └── json_loader.py      # JSON parsing for MSF and CIEL sources
+│   │   ├── csv_loader.py        # CSV Processing
+│   │   ├── json_loader.py       # JSON Parsing (MSF Dictionary)
 │   ├── matching/
-│   │   └── matcher.py          # Candidate retrieval and scoring logic
-│   ├── api/
-│   │   └── app.py              # FastAPI endpoints for file upload and matching
+│   │   ├── matcher.py           # Matching Algorithm with BioBERT
 │   ├── model/
-│   │   └── embedder.py         # BioBERT loading and embedding generation
-│   └── utils/
-│       └── config.py           # Configuration parameters (thresholds, weights)
-├── tests/                      # Unit tests for all modules
-├── Dockerfile                  # Dockerfile for containerizing the API
-├── docker-compose.yml          # docker-compose for simplified deployment
-├── requirements.txt            # Python dependencies
-├── README.md                   # Project overview, setup, and usage instructions
-└── setup.sh                    # Script to setup the project environment
+│   │   ├── embedder.py          # BioBERT Text Embeddings
+│   ├── api/
+│   │   ├── app.py               # FastAPI Endpoints
+│   ├── utils/
+│   │   ├── config.py            # Thresholds & Weights
+├── tests/                       # Unit Tests
+├── requirements.txt              # Python Dependencies
+├── README.md                     # Project Documentation
+
 ```
 
 ## Prerequisites
 
-- [Docker](https://docs.docker.com/get-docker/) (and optionally docker-compose)
 - [Python 3.9+](https://www.python.org/downloads/) (if running locally without Docker)
 
-## Installation & Setup
 
-### Running with Docker
+##  Installation & Setup
 
-1. **Build the Docker Image:**
-   ```bash
-   docker build -t ocl-mapper-api .
-Run the Container:
-
-bash
-Copy
-docker run -p 8000:8000 ocl-mapper-api
-Alternatively, if using docker-compose:
-
-bash
-Copy
-docker-compose up --build
-Access the API: The API will be available at http://localhost:8000. Use tools like Postman or the integrated UI to upload CSV files and retrieve match results.
-
-Running Locally (Without Docker)
-Create a Virtual Environment:
-
-bash
-Copy
+###  **Install Dependencies**
+```bash
 python -m venv venv
-source venv/bin/activate  # On Windows use: venv\Scripts\activate
-Install Dependencies:
-
-bash
-Copy
-pip install --upgrade pip
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-Run the API:
+```
 
-bash
-Copy
+### **Run the API**
+```bash
 uvicorn src.api.app:app --reload
-The API will be available at http://localhost:8000.
+```
+
+### **Test Endpoints in Swagger**
+```bash
+Go to http://127.0.0.1:8000/docs and try:
+
+/match → Upload a CSV and get matching results.
+/feedback → Submit corrections to improve future matches.
+```
+
+## How Feedback System Works
+
+1. Run ```/match``` API → Get results with similarity scores.
+2. Submit ```/feedbac```k API → Store corrections.
+3. Re-run ```/match``` → Corrected terms get a boosted score automatically.
+
+### Example Feedback Submission
+
+```JSON
+{
+  "term": "loss of interest",
+  "correct_match": {
+    "candidate_id": "7306178",
+    "candidate_text": "depressive symptoms"
+  }
+}
+```
+
+```JSON
+{
+  "results": [
+    {
+      "term": "loss of interest",
+      "matches": [
+        {"candidate_id": "7306178", "candidate_text": "depressive symptoms", "similarity_score": 0.96},
+        {"candidate_id": "5687649", "candidate_text": "positive thoughts", "similarity_score": 0.89}
+      ]
+    }
+  ]
+}
+```
