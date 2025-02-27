@@ -10,28 +10,28 @@ The API is built using **FastAPI** and leverages **BioBERT embeddings** from `dm
 
 ### ** Key Features & Libraries Used:**  
 
-- ** Data Ingestion & Preprocessing** (`pandas`, `json`)  
+- **Data Ingestion & Preprocessing** (`pandas`, `json`)  
   - Loads CSV files and medical dictionaries (`OCL_MSF_Source.json`).
   - Normalizes multilingual text fields, including **Arabic** (handled as raw text).  
 
-- ** Embedding & Matching** (`transformers`, `torch`, `scikit-learn`)  
+- **Embedding & Matching** (`transformers`, `torch`, `scikit-learn`)  
   - Uses **BioBERT** to generate embeddings for medical terms.  
   - **Cosine similarity (`sklearn.metrics.pairwise.cosine_similarity`)** ranks the best matches.  
 
-- ** API Layer** (`fastapi`, `uvicorn`)  
+- **API Layer** (`fastapi`, `uvicorn`)  
   - **`/match`** → Uploads CSV & returns **top-k concept matches**.  
   - **`/feedback`** → Stores user corrections dynamically in `feedback_store.json`.  
 
-- ** Learning from User Feedback** (`json`)  
+- **Learning from User Feedback** (`json`)  
   - **Feedback improves similarity scores** in real-time.  
   - Reloads feedback dynamically inside `match()` without restarting API.  
 
-- ** Categorized Matches**  
+- **Categorized Matches**  
   - ✅ **Pre-matched** (High confidence, ≥0.99)  
   - ⚠ **To review** (Medium confidence, 0.75 - 0.99)  
   - ❌ **No match** (Low confidence, <0.75)  
 
-- ** Testing & Validation** (`Swagger UI`, `cURL`, `Postman`)  
+- **Testing & Validation** (`Swagger UI`, `cURL`, `Postman`)  
   - Easily test endpoints at `http://127.0.0.1:8000/docs`.  
 
 ### **📌 Summary of Libraries Used**
