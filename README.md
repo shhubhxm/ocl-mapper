@@ -41,7 +41,7 @@ The API is built using **FastAPI** and leverages **BioBERT embeddings** from `dm
 | **Data Handling** | `pandas`, `json`, `os` |
 | **Text Embeddings** | `transformers`, `torch` |
 | **Similarity Matching** | `scikit-learn (cosine_similarity)`, `numpy` |
-| **Multilingual Support** | `langdetect`, `bert-base-multilingual-cased` |
+| **Multilingual Support** | `langdetect`, `biobert-base-cased-v1.1` |
 | **Feedback Storage** | `json` (local file-based learning) |
 
 ## File Structure
