@@ -24,7 +24,7 @@ To improve the accuracy of results, the system integrates with Supabase, a cloud
 ocl-mapper/
 ├── data/
 │   ├── raw/                     # CSV input files
-│   │   ├── MSF.csv              # Medical Dictionary
+│   │   ├── MSF.csv              # Benchmarking CSV
 │   ├── processed/               # Extracted JSON & feedback storage
 │   │   ├── export.json          # Medical Dictionary
 ├── src/
