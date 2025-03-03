@@ -4,6 +4,8 @@ This FastAPI-powered medical terminology matching system uses BioBERT embeddings
 
 To improve the accuracy of results, the system integrates with Supabase, a cloud-based PostgreSQL database, where users can provide feedback corrections. This feedback adjusts future similarity calculations, ensuring that validated matches always appear as the top result for the given term.
 
+**Author:** **𝕊𝕙𝕦𝕓𝕙𝕒𝕞 𝕍𝕪𝕒𝕤**   ([GitHub](https://github.com/shhubhxm) | [Email](mailto:vyasshubham.41@gmail.com))
+
 # Project Overview
 
 ## Features
@@ -22,8 +24,9 @@ To improve the accuracy of results, the system integrates with Supabase, a cloud
 ocl-mapper/
 ├── data/
 │   ├── raw/                     # CSV input files
+│   │   ├── MSF.csv              # Medical Dictionary
 │   ├── processed/               # Extracted JSON & feedback storage
-│   │   ├── OCL_MSF_Source.json  # MSF Medical Dictionary
+│   │   ├── export.json          # Medical Dictionary
 ├── src/
 │   ├── ingestion/
 │   │   ├── csv_loader.py        # CSV Processing
