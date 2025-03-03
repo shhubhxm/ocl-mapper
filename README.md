@@ -30,7 +30,7 @@ ocl-mapper/
 ├── src/
 │   ├── ingestion/
 │   │   ├── csv_loader.py        # CSV Processing
-│   │   ├── json_loader.py       # JSON Parsing (MSF Dictionary)
+│   │   ├── json_loader.py       # JSON Parsing (Dictionary)
 │   ├── matching/
 │   │   ├── matcher.py           # Matching Algorithm with BioBERT
 │   ├── model/
