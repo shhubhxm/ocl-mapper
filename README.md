@@ -65,8 +65,8 @@ pip install -r requirements.txt
    | `candidate_id`  | `TEXT`      | |
    | `candidate_text`| `TEXT`      | |
 
-5. Copy **Supabase URL** & **API Key**
-6. Add these to your `.env` file:
+- Copy **Supabase URL** & **API Key**
+- Add these to your `.env` file:
    ```bash
    SUPABASE_URL="https://your-supabase-url.supabase.co"
    SUPABASE_KEY="your-supabase-secret-key"
