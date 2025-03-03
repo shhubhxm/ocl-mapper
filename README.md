@@ -52,11 +52,11 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### **2️. Set Up Supabase**
-1. Create an account at **[https://supabase.com](https://supabase.com)**
-2. Create a **new project**
-3. Go to **"Table Editor"** → Create a table **`feedback_store`**
-4. Add these columns:
+### **2. Set Up Supabase**
+- Create an account at **[https://supabase.com](https://supabase.com)**
+- Create a **new project**
+- Go to **"Table Editor"** → Create a table **`feedback_store`**
+- Add these columns:
    
    | Column Name       | Type        | Default |
    |------------------|------------|----------|
@@ -72,12 +72,12 @@ pip install -r requirements.txt
    SUPABASE_KEY="your-supabase-secret-key"
    ```
 
-### **3️. Run the API**
+### **3. Run the API**
 ```bash
 uvicorn src.api.app:app --reload
 ```
 
-### **4️. Test Endpoints in Swagger**
+### **4. Test Endpoints in Swagger**
 Go to **[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)** and try:
 - **`/match`** → Upload a CSV and get matching results.
 - **`/feedback`** → Submit corrections to improve future matches.
