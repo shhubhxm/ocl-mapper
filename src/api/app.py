@@ -1,28 +1,22 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
-import json
 import os
+import json
+from supabase import create_client, Client
 from src.ingestion.csv_loader import load_csv
 from src.ingestion.json_loader import load_json
 from src.matching.matcher import Matcher
+from src.utils.config import SUPABASE_URL, SUPABASE_KEY 
+import uuid
 
 app = FastAPI(title="OCL Mapper API")
 
-# ✅ Load real dictionary concepts
+# Supabase Setup
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Load dictionary
 json_file_path = "data/raw/export.json"
 concepts_data = load_json(json_file_path)
 
-# ✅ Load stored feedback (if exists)
-feedback_file = "data/processed/feedback_store.json"
-
-def load_feedback():
-    if os.path.exists(feedback_file):
-        with open(feedback_file, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {}
-
-feedback_store = load_feedback()
-
-# ✅ Build candidates from the dictionary
 def build_candidates_from_dict(concepts_data):
     candidate_texts = []
     candidate_ids = []
@@ -41,18 +35,7 @@ def build_candidates_from_dict(concepts_data):
     return candidate_texts, candidate_ids
 
 candidate_texts, candidate_ids = build_candidates_from_dict(concepts_data)
-
-# ✅ Initialize matcher
 matcher = Matcher(candidate_texts, candidate_ids)
-
-# ✅ Categorize Matches
-def categorize_match(score):
-    if score >= 0.99:
-        return "Pre-matched"
-    elif 0.75 <= score < 0.99:
-        return "To review"
-    else:
-        return "No match"
 
 @app.post("/match")
 async def match_terms(file: UploadFile = File(...)):
@@ -66,20 +49,40 @@ async def match_terms(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="CSV missing 'Label' column")
 
     for term in df["Label"].dropna():
-        match_result = matcher.match(term, top_k=3)
+        # Fetch feedback from Supabase
+        corrected_matches = (
+            supabase.from_("feedback_store")
+            .select("*")
+            .eq("term", term)
+            .execute()
+        )
+        
+        print(f"Retrieved Feedback for '{term}': {corrected_matches.data}")  # Debugging Output
 
-        for match in match_result:
-            match["category"] = categorize_match(match["similarity_score"])
-
-        results.append({"term": term, "matches": match_result})
+        # If feedback exists, override results and show only the corrected match
+        if corrected_matches.data:
+            feedback_result = [
+                {
+                    "candidate_id": correct["candidate_id"],
+                    "candidate_text": correct["candidate_text"],
+                    "similarity_score": 1.0,  # Force confidence to max
+                    "adjusted_by_feedback": True
+                }
+                for correct in corrected_matches.data
+            ]
+            results.append({"term": term, "matches": feedback_result})
+        
+        else:
+            # Run normal matching if no feedback exists
+            match_result = matcher.match(term, top_k=3)
+            results.append({"term": term, "matches": match_result})
 
     return {"results": results}
 
-# ✅ Feedback API to Store User Validation
 @app.post("/feedback")
 async def store_feedback(feedback: dict):
     """
-    Stores user feedback on matches in a local JSON file.
+    Stores user feedback in Supabase and injects the corrected match into the candidate list.
     """
     term = feedback.get("term")
     correct_match = feedback.get("correct_match")
@@ -87,15 +90,28 @@ async def store_feedback(feedback: dict):
     if not term or not correct_match:
         raise HTTPException(status_code=400, detail="Missing 'term' or 'correct_match' in feedback.")
 
-    if term not in feedback_store:
-        feedback_store[term] = []
+    # Ensure data is stored correctly in Supabase
+    data = {
+        "id": str(uuid.uuid4()),  # Generate a unique ID
+        "term": term,
+        "candidate_id": correct_match["candidate_id"],
+        "candidate_text": correct_match["candidate_text"]
+    }
+    
+    # Insert into Supabase
+    response = supabase.from_("feedback_store").insert(data).execute()
+    
+    # Debugging: Confirm the data was stored
+    print(f" Feedback Stored: {response.data}")
 
-    feedback_store[term].append(correct_match)
+    # Inject feedback term into the matcher dynamically
+    if correct_match["candidate_text"] not in matcher.candidate_texts:
+        matcher.candidate_texts.append(correct_match["candidate_text"])
+        matcher.candidate_ids.append(correct_match["candidate_id"])
+        new_embedding = matcher.embedder.get_embedding(correct_match["candidate_text"])
+        matcher.candidate_embeddings = np.vstack([matcher.candidate_embeddings, new_embedding])
 
-    with open(feedback_file, "w", encoding="utf-8") as f:
-        json.dump(feedback_store, f, indent=4)
-
-    return {"message": "Feedback stored successfully"}
+    return {"message": "Feedback stored and will be applied instantly."}
 
 if __name__ == "__main__":
     import uvicorn

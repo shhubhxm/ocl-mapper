@@ -1,58 +1,29 @@
 # OCL Mapper API
 
-This project implements an API that ingests clinical terms from CSV files and matches them against multiple dictionaries (e.g., MSF and CIEL) using a BioBERT-based model. The API returns candidate matches along with confidence scores and is designed for integration with existing OpenConceptLab components.
+This FastAPI-powered medical terminology matching system uses BioBERT embeddings to find the most relevant medical concepts based on semantic similarity. Given a term from a CSV file, the system generates an embedding and compares it against a structured medical dictionary (CIEL/MSF dataset) to find the closest match using cosine similarity.
 
-## Project Overview
+To improve the accuracy of results, the system integrates with Supabase, a cloud-based PostgreSQL database, where users can provide feedback corrections. This feedback adjusts future similarity calculations, ensuring that validated matches always appear as the top result for the given term.
 
-### **API Functionality (with Exact Libraries & Techniques Used)**  
+# Project Overview
 
-The API is built using **FastAPI** and leverages **BioBERT embeddings** from `dmis-lab/biobert-base-cased-v1.1` for clinical term matching.  
+## Features
+- **Medical Concept Matching**: Matches terms from a CSV file to concepts in the MSF dictionary.
+- **BioBERT-based Embeddings**: Uses **`dmis-lab/biobert-base-cased-v1.1`** to generate embeddings for accurate similarity-based matching.
+- **Real-time Feedback System**: Stores **user corrections** in **Supabase** and dynamically updates results.
+- **Supabase Cloud Storage**: Stores feedback in a **PostgreSQL cloud database**, eliminating file-based issues.
+- **Dynamic Score Adjustment**: **Learns over time** and **ensures corrected matches always appear**.
+- **API with FastAPI & Uvicorn**: Provides easy-to-use RESTful endpoints.
+- **Swagger UI for Testing**: Easily test endpoints at `http://127.0.0.1:8000/docs`.
 
-### **Key Features & Libraries Used:**  
+---
 
-- **Data Ingestion & Preprocessing** (`pandas`, `json`)  
-  - Loads CSV files and medical dictionaries (`OCL_MSF_Source.json`).
-  - Normalizes multilingual text fields, including **Arabic** (handled as raw text).  
-
-- **Embedding & Matching** (`transformers`, `torch`, `scikit-learn`)  
-  - Uses **BioBERT** to generate embeddings for medical terms.  
-  - **Cosine similarity (`sklearn.metrics.pairwise.cosine_similarity`)** ranks the best matches.  
-
-- **API Layer** (`fastapi`, `uvicorn`)  
-  - **`/match`** → Uploads CSV & returns **top-k concept matches**.  
-  - **`/feedback`** → Stores user corrections dynamically in `feedback_store.json`.  
-
-- **Learning from User Feedback** (`json`)  
-  - **Feedback improves similarity scores** in real-time.  
-  - Reloads feedback dynamically inside `match()` without restarting API.  
-
-- **Categorized Matches**  
-  - ✅ **Pre-matched** (High confidence, ≥0.99)  
-  - ⚠ **To review** (Medium confidence, 0.75 - 0.99)  
-  - ❌ **No match** (Low confidence, <0.75)  
-
-- **Testing & Validation** (`Swagger UI`, `cURL`, `Postman`)  
-  - Easily test endpoints at `http://127.0.0.1:8000/docs`.  
-
-### **📌 Summary of Libraries Used**
-| **Feature** | **Libraries Used** |
-|------------|-----------------|
-| **API Development** | `fastapi`, `uvicorn` |
-| **Data Handling** | `pandas`, `json`, `os` |
-| **Text Embeddings** | `transformers`, `torch` |
-| **Similarity Matching** | `scikit-learn (cosine_similarity)`, `numpy` |
-| **Multilingual Support** | `langdetect`, `biobert-base-cased-v1.1` |
-| **Feedback Storage** | `json` (local file-based learning) |
-
-## File Structure
-
-```bash
+## Project Structure
+```
 ocl-mapper/
 ├── data/
 │   ├── raw/                     # CSV input files
 │   ├── processed/               # Extracted JSON & feedback storage
-│   │   ├── OCL_MSF_Source.json  # MSF and CEIL Medical Dictionary
-│   │   ├── feedback_store.json  # Stores user feedback (Auto-created)
+│   │   ├── OCL_MSF_Source.json  # MSF Medical Dictionary
 ├── src/
 │   ├── ingestion/
 │   │   ├── csv_loader.py        # CSV Processing
@@ -62,69 +33,111 @@ ocl-mapper/
 │   ├── model/
 │   │   ├── embedder.py          # BioBERT Text Embeddings
 │   ├── api/
-│   │   ├── app.py               # FastAPI Endpoints
+│   │   ├── app.py               # FastAPI Endpoints with Supabase Integration
 │   ├── utils/
 │   │   ├── config.py            # Thresholds & Weights
 ├── tests/                       # Unit Tests
 ├── requirements.txt              # Python Dependencies
 ├── README.md                     # Project Documentation
-
 ```
 
-## Prerequisites
+---
 
-- [Python 3.9+]
+## Installation & Setup
 
-##  Installation & Setup
-
-###  **Install Dependencies**
+### **1. Install Dependencies**
 ```bash
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### **Run the API**
+### **2️. Set Up Supabase**
+1. Create an account at **[https://supabase.com](https://supabase.com)**
+2. Create a **new project**
+3. Go to **"Table Editor"** → Create a table **`feedback_store`**
+4. Add these columns:
+   
+   | Column Name       | Type        | Default |
+   |------------------|------------|----------|
+   | `id`            | `uuid` (Primary Key) | `gen_random_uuid()` |
+   | `term`          | `TEXT`      | |
+   | `candidate_id`  | `TEXT`      | |
+   | `candidate_text`| `TEXT`      | |
+
+5. Copy **Supabase URL** & **API Key**
+6. Add these to your `.env` file:
+   ```bash
+   SUPABASE_URL="https://your-supabase-url.supabase.co"
+   SUPABASE_KEY="your-supabase-secret-key"
+   ```
+
+### **3️. Run the API**
 ```bash
 uvicorn src.api.app:app --reload
 ```
 
-### **Test Endpoints in Swagger**
-```bash
-Go to http://127.0.0.1:8000/docs and try:
+### **4️. Test Endpoints in Swagger**
+Go to **[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)** and try:
+- **`/match`** → Upload a CSV and get matching results.
+- **`/feedback`** → Submit corrections to improve future matches.
 
-/match → Upload a CSV and get matching results.
-/feedback → Submit corrections to improve future matches.
-```
+---
 
-## How Feedback System Works
+##  **How the Feedback System Works**
+1. **Run `/match` API** → Get results with similarity scores.
+2. **Submit `/feedback` API** → Store corrections **in Supabase**.
+3. **Re-run `/match`** → **Corrected terms** will be the **only match displayed**.
 
-1. Run ```/match``` API → Get results with similarity scores.
-2. Submit ```/feedback``` API → Store corrections.
-3. Re-run ```/match``` → Corrected terms get a boosted score automatically.
+---
 
-### Example Feedback Submission
-
-```JSON
+### **Example Feedback Submission**
+**Request to `/feedback`:**
+```json
 {
-  "term": "loss of interest",
+  "term": "some (-3 points)",
   "correct_match": {
-    "candidate_id": "7306178",
-    "candidate_text": "depressive symptoms"
+    "candidate_id": "5756853",
+    "candidate_text": "feels like they have failed someone"
   }
 }
 ```
 
-```JSON
+**Supabase Database (`feedback_store` table) After Insertion:**
+| term            | candidate_id | candidate_text                      |
+|----------------|-------------|-------------------------------------|
+| some (-3 points) | 5756853      | feels like they have failed someone |
+
+---
+
+### **Example Updated Matching Output**
+After submitting feedback, running `/match` will return:
+```json
 {
   "results": [
     {
-      "term": "loss of interest",
+      "term": "some (-3 points)",
       "matches": [
-        {"candidate_id": "7306178", "candidate_text": "depressive symptoms", "similarity_score": 0.96},
-        {"candidate_id": "5687649", "candidate_text": "positive thoughts", "similarity_score": 0.89}
+        {"candidate_id": "5756853", "candidate_text": "feels like they have failed someone", "similarity_score": 1.0, "adjusted_by_feedback": true}
       ]
     }
   ]
 }
 ```
+**Feedback ensures only the corrected match appears!** 
+
+---
+
+## **Troubleshooting**
+- **API Not Loading?** Restart with:
+  ```bash
+  uvicorn src/api.app:app --reload
+  ```
+- **Feedback Not Updating?**  
+  - Run **this SQL query in Supabase** to check stored feedback:
+    ```sql
+    SELECT * FROM public.feedback_store WHERE term = 'some (-3 points)';
+    ```
+  - If the row is missing, `/feedback` did not save data correctly.
+  - If the row exists but does not appear in `/match`, restart the API.
+---

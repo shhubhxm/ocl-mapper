@@ -18,7 +18,7 @@ def load_json(json_path):
         concepts = full_data.get("concepts", [])
 
         if not concepts:
-            print("⚠ Warning: No concepts found in the JSON file!")
+            print("Warning: No concepts found in the JSON file!")
 
         return concepts
 
@@ -31,6 +31,6 @@ if __name__ == "__main__":
 
     # Load and test the JSON extraction
     concepts_data = load_json(json_file_path)
-    print(f"✅ Loaded {len(concepts_data)} concepts")
+    print(f" Loaded {len(concepts_data)} concepts")
     print(concepts_data[:3])  # Print first 3 concepts for verification
 
