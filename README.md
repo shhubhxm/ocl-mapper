@@ -4,7 +4,7 @@ This FastAPI-powered medical terminology matching system uses BioBERT embeddings
 
 To improve the accuracy of results, the system integrates with Supabase, a cloud-based PostgreSQL database, where users can provide feedback corrections. This feedback adjusts future similarity calculations, ensuring that validated matches always appear as the top result for the given term.
 
-**Author:** **𝕊𝕙𝕦𝕓𝕙𝕒𝕞 𝕍𝕪𝕒𝕤**   ([GitHub](https://github.com/shhubhxm) | [Email](mailto:vyasshubham.41@gmail.com))
+**Author:** **𝗦𝗵𝘂𝗯𝗵𝗮𝗺 𝗩𝘆𝗮𝘀**   ([GitHub](https://github.com/shhubhxm) | [Email](mailto:vyasshubham.41@gmail.com))
 
 # Project Overview
 
