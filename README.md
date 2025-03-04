@@ -145,7 +145,7 @@ After submitting feedback, running `/match` will return:
   - If the row exists but does not appear in `/match`, restart the API.
 ---
 
-## ** System Workflow Diagram**
+## **System Workflow Diagram**
 Here is the flowchart illustrating the end-to-end process of medical concept matching using BioBERT and Supabase feedback integration:
 
 ![Workflow Diagram](image/diagram.png)
